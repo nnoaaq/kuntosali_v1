@@ -21,6 +21,92 @@ export default function CreateNewWorkoutForm({
         searchGroup === "Kaikki" || exercise.group === searchGroup;
       return searchResults && groupResults;
     });
+  const [exercises, setExercises] = useState<
+    {
+      exerciseId: number;
+      sets: { id: number; order: number; reps: number; weight: number }[];
+    }[]
+  >([]);
+  function addExercise(exerciseId: number) {
+    if (exercises.some((exercise) => exercise.exerciseId === exerciseId)) {
+      return setExercises((prevExercises) =>
+        prevExercises.filter((exercise) => exercise.exerciseId !== exerciseId),
+      );
+    }
+    setExercises((prevExercises) => [
+      ...prevExercises,
+      {
+        exerciseId: exerciseId,
+        sets: [{ id: Date.now(), order: 1, reps: 0, weight: 0 }],
+      },
+    ]);
+  }
+  function addSet(exerciseId: number) {
+    setExercises((prevExercises) =>
+      prevExercises.map((exercise) => {
+        if (exercise.exerciseId === exerciseId) {
+          return {
+            ...exercise,
+            sets: [
+              ...exercise.sets,
+              {
+                id: Date.now(),
+                order: exercise.sets.length + 1,
+                reps: exercise.sets[0]?.reps || 0,
+                weight: exercise.sets[0]?.weight || 0,
+              },
+            ],
+          };
+        }
+        return exercise;
+      }),
+    );
+  }
+  function removeSet(exerciseId: number, setId: number) {
+    setExercises((prevExercises) =>
+      prevExercises
+        .map((exercise) => {
+          if (exercise.exerciseId !== exerciseId) return exercise;
+          return {
+            ...exercise,
+            sets: exercise.sets
+              .filter((set) => set.id !== setId)
+              .map((set, index) => ({
+                ...set,
+                order: index + 1,
+              })),
+          };
+        })
+        // Jos ei jäänyt settejä > koko liike pois.
+        .filter((exercise) => exercise.sets.length > 0),
+    );
+  }
+  function updateSet(
+    exerciseId: number,
+    setId: number,
+    field: string,
+    value: number,
+  ) {
+    setExercises((prevExercises) =>
+      prevExercises.map((exercise) => {
+        if (exercise.exerciseId !== exerciseId) return exercise;
+        return {
+          ...exercise,
+          sets: exercise.sets.map((set) => {
+            if (set.id !== setId) return set;
+            return {
+              ...set,
+              [field]: value,
+            };
+          }),
+        };
+      }),
+    );
+  }
+  function startWorkout() {
+    console.log("ALOITETAAN HARJOITUS!!!!!");
+    console.log(exercises);
+  }
   return (
     <div className="max-w-md w-full">
       <div className="bg-zinc-900 text-zinc-100 rounded-lg p-2">
@@ -28,10 +114,8 @@ export default function CreateNewWorkoutForm({
         <div className="pt-1.5 flex flex-col gap-2">
           <div>
             <p className="text-md text-zinc-500 uppercase">Liikkeet</p>
+
             <div className="max-h-80 overflow-y-auto border border-zinc-800 rounded-md p-2">
-              <p className="text-zinc-500 text-xs uppercase tracking-wider">
-                Lihasryhmä
-              </p>
               <div className="flex gap-1 overflow-x-auto pb-2">
                 <div
                   onClick={() => setSearchGroup("Kaikki")}
@@ -59,10 +143,14 @@ export default function CreateNewWorkoutForm({
               {filteredExerciseList.length > 0 ? (
                 filteredExerciseList.map((exercise) => (
                   <div
+                    onClick={() => addExercise(exercise.id)}
                     key={exercise.id}
-                    className="p-1 pl-2 border-b border-zinc-800 hover:text-zinc-500 cursor-pointer"
+                    className="p-1 pl-2 hover:text-zinc-500 cursor-pointer flex justify-between"
                   >
-                    {exercise.name}
+                    <p>{exercise.name}</p>
+                    <div
+                      className={`w-4 h-4 border border-emerald-800 rounded hover:bg-emerald-900 ${exercises.some((e) => e.exerciseId === exercise.id) && "bg-emerald-800"}`}
+                    ></div>
                   </div>
                 ))
               ) : (
@@ -72,7 +160,105 @@ export default function CreateNewWorkoutForm({
               )}
             </div>
           </div>
+          <div className="border border-zinc-800 rounded-lg p-2 mb-2 overflow-y-auto">
+            {exercises.map((exercise) => (
+              <div key={exercise.exerciseId}>
+                <p className="text-zinc-500 uppercase ">
+                  {exerciseList.find((e) => e.id === exercise.exerciseId)?.name}
+                </p>
+                <div>
+                  <table className=" border-spacing-y-2 w-full bg-zinc-800/20 rounded table-auto ">
+                    <thead>
+                      <tr className="text-center">
+                        <th className="text-zinc-500">#</th>
+                        <th className="text-zinc-500">Toistot</th>
+                        <th></th>
+                        <th className="text-zinc-500">Paino (kg)</th>
+                        <th></th>
+                        <th className="p-2 text-right">
+                          <button
+                            onClick={() => addSet(exercise.exerciseId)}
+                            className="p-1 px-2 bg-emerald-800 rounded-full text-xs cursor-pointer hover:bg-emerald-900"
+                          >
+                            Lisää sarja
+                          </button>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {exercise.sets.map((set) => (
+                        <tr key={set.id} className="text-zinc-600 text-center">
+                          <td className="p-2">{set.order}</td>
+                          <td className="p-2">
+                            <input
+                              onChange={(e) =>
+                                updateSet(
+                                  exercise.exerciseId,
+                                  set.id,
+                                  "reps",
+                                  Number(e.target.value),
+                                )
+                              }
+                              className="[appearance:textfield] bg-zinc-950 text-zinc-500 p-1 text-center border border-zinc-800 rounded max-w-12 focus:outline-none focus:border-amber-600"
+                              type="number"
+                              name="reps"
+                              placeholder={String(set.reps)}
+                            />
+                          </td>
+                          <td>x</td>
+                          <td className="p-2">
+                            <input
+                              onChange={(e) =>
+                                updateSet(
+                                  exercise.exerciseId,
+                                  set.id,
+                                  "weight",
+                                  Number(e.target.value),
+                                )
+                              }
+                              className="[appearance:textfield] bg-zinc-950 text-zinc-500 p-1 text-center border border-zinc-800 rounded max-w-12 focus:outline-none focus:border-amber-600"
+                              type="number"
+                              name="weight"
+                              placeholder={String(set.weight)}
+                            />
+                          </td>
+                          <td>kg</td>
+                          <td
+                            onClick={() =>
+                              removeSet(exercise.exerciseId, set.id)
+                            }
+                            className="flex justify-end p-2 text-red-400 cursor-pointer"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="size-6"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 12h14"
+                              />
+                            </svg>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+        <button
+          onClick={() => startWorkout()}
+          className="p-2 bg-emerald-800/90 cursor-pointer hover:bg-emerald-900 rounded w-full"
+        >
+          Aloita treeni
+        </button>
       </div>
     </div>
   );
