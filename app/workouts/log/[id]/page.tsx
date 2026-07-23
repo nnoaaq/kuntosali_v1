@@ -53,8 +53,11 @@ export default async function Page({
     )
     .eq("id", id)
     .maybeSingle();
-  if (workoutError) return console.error(workoutError);
-  if (!workoutData) notFound(); // Joko treeniä ei ole olemassa tai treeni kuuluu toiselle.
+  if (workoutError) {
+    console.error(workoutError);
+    return notFound();
+  }
+  if (!workoutData) return notFound(); // Joko treeniä ei ole olemassa tai treeni kuuluu toiselle.
   return (
     <div className="flex justify-center w-full min-h-screen bg-zinc-950">
       <LogWorkout workout={workoutData as unknown as WorkoutData} />
