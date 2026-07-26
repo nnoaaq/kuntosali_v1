@@ -56,12 +56,12 @@ export function CompletedWorkout({
           <div key={exercise.id}>
             {exercise.exercise.name}
             <div>
-              <div className="flex gap-2 mt-1.5 flex-nowrap">
+              <div className="flex gap-2 mt-1.5 flex-wrap">
                 {exercise.sets
                   .sort((a, b) => a.order - b.order) // varmennetaan että ovat oikeassa järjestyksessä...
                   .map((set) => (
                     <div key={set.id}>
-                      <p className="border border-zinc-800 bg-zinc-800/20 p-2 rounded ">
+                      <p className="border border-zinc-800 bg-zinc-800/20 p-2 rounded text-nowrap ">
                         {set.reps} x {set.weight} kg
                       </p>
                     </div>

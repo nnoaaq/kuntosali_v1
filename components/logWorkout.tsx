@@ -23,8 +23,28 @@ interface WorkoutData {
     }[];
   };
 }
-
-export function LogWorkout({ workout }: { workout: WorkoutData }) {
+interface PreviousSets {
+  id: number;
+  exerciseId: number;
+  workoutId: number;
+  workout_name: string;
+  workout_starttime: string;
+  sets: {
+    id: number;
+    reps: number;
+    weight: number;
+    order: number;
+    workoutExerciseId: number;
+  }[];
+}
+export function LogWorkout({
+  workout,
+  previousSets,
+}: {
+  workout: WorkoutData;
+  previousSets: PreviousSets[];
+}) {
+  console.log("VASTAANOTETTU!!", previousSets);
   const [errors, setErrors] = useState<{ exercise: Number; text: string }[]>(
     [],
   );
@@ -153,17 +173,17 @@ export function LogWorkout({ workout }: { workout: WorkoutData }) {
     }
   }
   return (
-    <div className="border border-zinc-800 w-full max-w-md rounded p-2 text-zinc-200">
-      <div className="flex justify-between">
+    <div className="border border-zinc-800 w-full max-w-md rounded text-zinc-200">
+      <div className="flex justify-between p-2">
         <h1 className="text-xl text-amber-500">{workout.name}</h1>
-        <div>
+        <div className="p-2">
           <WorkoutDuration startTime={workout.startTime} />
         </div>
       </div>
-      <div className=" p-2 rounded">
+      <div className="flex flex-col gap-2">
         {exercises.map((exercise) => (
-          <div key={exercise.id}>
-            <p className="text-md text-zinc-500 uppercase">
+          <div key={exercise.id} className="">
+            <p className="text-md text-zinc-500 uppercase p-2">
               {exercise.exercise.name}
             </p>
             {errors.map((error) => {
@@ -177,16 +197,15 @@ export function LogWorkout({ workout }: { workout: WorkoutData }) {
                   </p>
                 );
             })}
-            <div>
-              <table className="border-separate border-spacing-y-1 w-full bg-zinc-800/20 rounded table-auto ">
+            <div className="bg-zinc-700/20 w-full">
+              <table className="border-separate border-spacing-y-1 w-full rounded table-auto ">
                 <thead>
                   <tr className="text-center">
                     <th></th>
                     <th className="text-zinc-500">#</th>
+                    <th className="text-zinc-500">Edellinen</th>
                     <th className="text-zinc-500">Toistot</th>
-                    <th></th>
                     <th className="text-zinc-500">Paino (kg)</th>
-                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -197,7 +216,7 @@ export function LogWorkout({ workout }: { workout: WorkoutData }) {
                         onClick={() => setCompleted(exercise.id, set.id)}
                       >
                         <svg
-                          className={`w-5 h-5 mx-auto text-emerald-800 hover:bg-emerald-800 rounded-full cursor-pointer ${set.finished && "bg-emerald-800"}`}
+                          className={`w-6 h-6 mx-auto text-emerald-800 hover:bg-emerald-800 rounded-full cursor-pointer ${set.finished && "bg-emerald-800"}`}
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -210,6 +229,23 @@ export function LogWorkout({ workout }: { workout: WorkoutData }) {
                         className={`p-2 ${set.finished && "bg-emerald-900/20"}`}
                       >
                         {set.order}
+                      </td>
+                      <td
+                        className={`p-2 ${set.finished && "bg-emerald-900/20"}`}
+                      >
+                        {(() => {
+                          const prevExercise = previousSets.find(
+                            (pe) => pe.exerciseId === exercise.exercise.id,
+                          );
+
+                          const prevSet = prevExercise?.sets.find(
+                            (ps) => ps.order === set.order,
+                          );
+
+                          return prevSet
+                            ? `${prevSet.reps} x ${prevSet.weight}`
+                            : "-";
+                        })()}
                       </td>
                       <td
                         className={`p-2 ${set.finished && "bg-emerald-900/20"}`}
@@ -230,9 +266,7 @@ export function LogWorkout({ workout }: { workout: WorkoutData }) {
                           placeholder={String(set.reps)}
                         />
                       </td>
-                      <td className={`${set.finished && "bg-emerald-900/20"}`}>
-                        x
-                      </td>
+
                       <td
                         className={`p-2 ${set.finished && "bg-emerald-900/20"}`}
                       >
@@ -252,9 +286,7 @@ export function LogWorkout({ workout }: { workout: WorkoutData }) {
                           placeholder={String(set.weight)}
                         />
                       </td>
-                      <td className={`${set.finished && "bg-emerald-900/20"}`}>
-                        kg
-                      </td>
+
                       <td
                         className={`p-2 text-right  ${set.finished && "bg-emerald-900/20 rounded-r-xl"}`}
                       >
@@ -286,7 +318,7 @@ export function LogWorkout({ workout }: { workout: WorkoutData }) {
               </table>
               <button
                 onClick={() => addSet(exercise.id)}
-                className="mt-1.5 p-2 bg-zinc-800/40 cursor-pointer hover:bg-zinc-900 w-full rounded-full"
+                className=" p-2 bg-zinc-800/40 cursor-pointer hover:bg-zinc-900 w-full rounded-full"
               >
                 Lisää sarja
               </button>

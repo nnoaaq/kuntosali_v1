@@ -20,6 +20,20 @@ interface WorkoutData {
     }[];
   };
 }
+interface PreviousSets {
+  id: number;
+  exerciseId: number;
+  workoutId: number;
+  workout_name: string;
+  workout_starttime: string;
+  sets: {
+    id: number;
+    reps: number;
+    weight: number;
+    order: number;
+    workoutExerciseId: number;
+  }[];
+}
 export default async function Page({
   params,
 }: {
@@ -28,9 +42,8 @@ export default async function Page({
   const { id } = await params;
   const cookieStore = await cookies();
   const database = createClient(cookieStore);
-  // Supabasessa on RLS Policy, joka antaa nähdä vain omat workoutit
 
-  const { data: workoutData, error: workoutError } = await database
+  const { data: rawWorkoutData, error: workoutError } = await database
     .from("Workouts")
     .select(
       `
@@ -57,10 +70,32 @@ export default async function Page({
     console.error(workoutError);
     return notFound();
   }
-  if (!workoutData) return notFound(); // Joko treeniä ei ole olemassa tai treeni kuuluu toiselle.
+  if (!rawWorkoutData) return notFound(); // Joko treeniä ei ole olemassa tai treeni kuuluu toiselle.
+  const workoutData = rawWorkoutData as unknown as WorkoutData;
+  const exercises = [
+    ...new Set(
+      workoutData.exerciseList.exercises.map(
+        (exercise) => exercise.exercise.id,
+      ),
+    ),
+  ];
+  const { data: previousSetsData, error: previousSetsError } =
+    await database.rpc("latest_sets", {
+      exercises: [1, 2],
+    });
+  let previousSets;
+  if (previousSetsError) {
+    previousSets = [];
+    return;
+  }
+  previousSets = previousSetsData;
+  console.log(">>>", previousSets);
   return (
     <div className="flex justify-center w-full min-h-screen bg-zinc-950">
-      <LogWorkout workout={workoutData as unknown as WorkoutData} />
+      <LogWorkout
+        workout={workoutData as unknown as WorkoutData}
+        previousSets={previousSets as unknown as PreviousSets[]}
+      />
     </div>
   );
 }

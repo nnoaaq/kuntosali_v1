@@ -212,8 +212,8 @@ export default function CreateNewWorkoutForm({
                   {e.errorText}
                 </p>
               ))}
-            <div className="max-h-80 overflow-y-auto border border-zinc-800 rounded-md p-2">
-              <div className="flex gap-1 overflow-x-auto pb-2">
+            <div className="max-h-80 scrollbar-none overflow-y-auto border border-zinc-800 rounded-md p-2">
+              <div className="flex gap-1 scrollbar-none overflow-x-auto pb-2">
                 <div
                   onClick={() => setSearchGroup("Kaikki")}
                   className={`border border-zinc-800 p-2 rounded-lg cursor-pointer ${searchGroup === "Kaikki" && "bg-zinc-800"}`}
@@ -259,7 +259,7 @@ export default function CreateNewWorkoutForm({
           </div>
           <div
             hidden={exercises.length === 0}
-            className="border border-zinc-800 rounded-lg p-2 mb-2 overflow-y-auto"
+            className="border border-zinc-800 rounded-lg p-2 mb-2 scrollbar-none overflow-y-auto "
           >
             {exercises.map((exercise) => (
               <div key={exercise.exerciseId}>
